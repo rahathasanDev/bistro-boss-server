@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7orfsex.mongodb.net/?retryWrites=true&w=majority`;
 
 
@@ -40,14 +40,42 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
-    // carts collection when add to card clicked , it will post to mongodb 
 
+
+    // carts collection api's >>
+    app.get("/carts", async (req, res) => {
+      const email  = req.query.email;
+      console.log(email);
+      if(!email){
+        res.send([]);
+      }
+      const query = {email: email};
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
+
+    // when add to card clicked , it will post to mongodb 
     app.post("/carts", async (req, res) => {
       const item  = req.body;
-      console.log(item);
+      // console.log(item);
       const result = await cartCollection.insertOne(item);
       res.send(result);
     });
+
+    // delete function here
+    app.delete("/carts/:id", async (req, res) => {
+     const id = req.params.id;
+     const query = {_id: new ObjectId(id)};
+     const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // const result = await cartCollection.deleteOne({_id: new ObjectId(req.params.id)});
+  
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
