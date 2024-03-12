@@ -10,7 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7orfsex.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -41,8 +40,6 @@ async function run() {
       res.send({ token })
     })
 
-
-
     // middlewares 
     const verifyToken = (req, res, next) => {
       console.log('inside verify token', req.headers.authorization);
@@ -68,7 +65,7 @@ async function run() {
       const user = await userCollection.findOne(query);
       const isAdmin = user?.role === 'admin';
       if (!isAdmin) {
-        console.log("pagol pagol");
+
         return res.status(403).send({ message: 'forbidden access' });
       }
       next();
@@ -76,7 +73,7 @@ async function run() {
 
 
     // users related api
-    app.get('/users',  async (req, res) => {
+    app.get('/users', async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
@@ -87,7 +84,7 @@ async function run() {
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'forbidden access' })
       }
-      const user = await userCollection.findOne({email});
+      const user = await userCollection.findOne({ email });
       let admin = false;
       if (user) {
         admin = user?.role === 'admin';
@@ -133,17 +130,24 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+    
+    app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
+      const item = req.body;
+      const result = await menuCollection.insertOne(item);
+      res.send(result);
+    });
+
+
+
     // review related apis
     app.get("/reviews", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
-
-
     // carts collection api's >>
     app.get("/carts", async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+      // console.log(email);
       if (!email) {
         return res.send([]);
       }
@@ -155,9 +159,6 @@ async function run() {
       const result = await cartCollection.find(query).toArray();
       res.send(result);
     });
-
-
-
     // when add to card clicked , it will post to mongodb 
     app.post("/carts", async (req, res) => {
       const item = req.body;
@@ -175,10 +176,6 @@ async function run() {
     });
 
     // const result = await cartCollection.deleteOne({_id: new ObjectId(req.params.id)});
-
-
-
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
